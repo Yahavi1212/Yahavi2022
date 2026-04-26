@@ -155,6 +155,22 @@ export default function Footer() {
                   Digital Marketing
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => scrollToTop('/shop/social-media')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
+                >
+                  Social Media
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToTop('/shop/dashboards')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
+                >
+                  Dashboards
+                </button>
+              </li>
             </ul>
           </div>
 

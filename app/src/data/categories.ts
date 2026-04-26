@@ -13,7 +13,7 @@ export interface Category {
   subcategories: Subcategory[];
 }
 
-// Categories from shop.hackknow.com — images handled via Google Cloud Storage
+// Categories from shop.hackknow.com — canonical backend slugs
 export const categories: Category[] = [
   {
     id: 'powerpoint-decks',
@@ -26,6 +26,19 @@ export const categories: Category[] = [
       { slug: 'creative', name: 'Creative' },
       { slug: 'minimal', name: 'Minimal' },
       { slug: 'pitch-deck', name: 'Pitch Deck' },
+    ],
+  },
+  {
+    id: 'excel-sheets',
+    name: 'Excel Sheets',
+    title: 'Excel & Sheets',
+    slug: 'excel-sheets',
+    itemCount: 278,
+    subcategories: [
+      { slug: 'trackers', name: 'Trackers' },
+      { slug: 'calculators', name: 'Calculators' },
+      { slug: 'reports', name: 'Reports' },
+      { slug: 'invoices', name: 'Invoices' },
     ],
   },
   {
@@ -42,6 +55,19 @@ export const categories: Category[] = [
     ],
   },
   {
+    id: 'business-templates',
+    name: 'Business Templates',
+    title: 'Business Templates',
+    slug: 'business-templates',
+    itemCount: 145,
+    subcategories: [
+      { slug: 'proposals', name: 'Proposals' },
+      { slug: 'contracts', name: 'Contracts' },
+      { slug: 'reports', name: 'Reports' },
+      { slug: 'letterheads', name: 'Letterheads' },
+    ],
+  },
+  {
     id: 'themes-templates',
     name: 'Themes & Templates',
     title: 'Themes & Templates',
@@ -49,9 +75,34 @@ export const categories: Category[] = [
     itemCount: 567,
     subcategories: [
       { slug: 'web-templates', name: 'Web Templates' },
-      { slug: 'dashboard', name: 'Dashboards' },
       { slug: 'landing-page', name: 'Landing Pages' },
       { slug: 'portfolio', name: 'Portfolio' },
+      { slug: 'admin', name: 'Admin Panels' },
+    ],
+  },
+  {
+    id: 'dashboards',
+    name: 'Dashboards',
+    title: 'Dashboards',
+    slug: 'dashboards',
+    itemCount: 198,
+    subcategories: [
+      { slug: 'analytics', name: 'Analytics' },
+      { slug: 'sales', name: 'Sales' },
+      { slug: 'finance', name: 'Finance' },
+      { slug: 'project', name: 'Project Management' },
+    ],
+  },
+  {
+    id: 'data-analysis-tools',
+    name: 'Data Analysis Tools',
+    title: 'Data Analysis Tools',
+    slug: 'data-analysis-tools',
+    itemCount: 87,
+    subcategories: [
+      { slug: 'spreadsheets', name: 'Spreadsheets' },
+      { slug: 'visualization', name: 'Visualization' },
+      { slug: 'automation', name: 'Automation' },
     ],
   },
   {
@@ -81,16 +132,15 @@ export const categories: Category[] = [
     ],
   },
   {
-    id: 'excel-sheets',
-    name: 'Excel Sheets',
-    title: 'Excel & Sheets',
-    slug: 'excel-sheets',
-    itemCount: 278,
+    id: 'bundles',
+    name: 'Bundles',
+    title: 'Product Bundles',
+    slug: 'bundles',
+    itemCount: 56,
     subcategories: [
-      { slug: 'trackers', name: 'Trackers' },
-      { slug: 'calculators', name: 'Calculators' },
-      { slug: 'reports', name: 'Reports' },
-      { slug: 'invoices', name: 'Invoices' },
+      { slug: 'starter-pack', name: 'Starter Packs' },
+      { slug: 'creator-bundle', name: 'Creator Bundles' },
+      { slug: 'business-kit', name: 'Business Kits' },
     ],
   },
   {
