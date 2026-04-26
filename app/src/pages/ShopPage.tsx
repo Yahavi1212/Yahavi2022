@@ -1,14 +1,19 @@
 import { useState, useMemo } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/products";
+import { useStore } from "@/context/StoreContext";
+import { categories } from "@/data/products";
 
 export default function ShopPage() {
   const { category: categorySlug } = useParams<{ category?: string }>();
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get("filter");
   const subParam = searchParams.get("sub");
+  
+  // Get products from WPGraphQL via StoreContext
+  const { state } = useStore();
+  const { products, loading } = state;
 
   const [sortBy, setSortBy] = useState<string>("featured");
   const [showFilters, setShowFilters] = useState(false);
@@ -252,7 +257,17 @@ export default function ShopPage() {
               )}
 
               {/* Products Grid */}
-              {filteredProducts.length > 0 ? (
+              {loading ? (
+                <div className="text-center py-20">
+                  <Loader2 className="w-12 h-12 text-hack-yellow mx-auto mb-4 animate-spin" />
+                  <p className="font-display font-bold text-lg mb-2">
+                    Loading products...
+                  </p>
+                  <p className="text-sm text-hack-black/50">
+                    Fetching from our digital marketplace
+                  </p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-6">
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
@@ -265,8 +280,18 @@ export default function ShopPage() {
                     No products found
                   </p>
                   <p className="text-sm text-hack-black/50">
-                    Try adjusting your filters or browse all products.
+                    {products.length === 0 
+                      ? "Products are loading from server. Please wait or refresh."
+                      : "Try adjusting your filters or browse all products."}
                   </p>
+                  {products.length === 0 && (
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="mt-4 px-6 py-2 bg-hack-yellow text-hack-black rounded-full font-bold hover:bg-hack-yellow/90 transition-colors"
+                    >
+                      Refresh Page
+                    </button>
+                  )}
                 </div>
               )}
             </div>

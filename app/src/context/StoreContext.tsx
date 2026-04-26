@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useMemo } from "react";
 import type { Product } from "@/data/products";
+import { fallbackProducts } from "@/data/products";
 import { fetchGraphQL, GET_PRODUCTS_QUERY } from "@/lib/graphql-client";
 import { initializeRazorpayPayment } from "@/lib/razorpay";
 
@@ -103,27 +104,58 @@ function storeReducer(state: StoreState, action: StoreAction): StoreState {
 }
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(storeReducer, initialState);
+  // Load cart from localStorage on init
+  const loadCartFromStorage = (): CartItem[] => {
+    try {
+      const saved = localStorage.getItem('hackknow-cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
 
+  const initialStateWithCart: StoreState = {
+    ...initialState,
+    cart: loadCartFromStorage()
+  };
+
+  const [state, dispatch] = useReducer(storeReducer, initialStateWithCart);
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('hackknow-cart', JSON.stringify(state.cart));
+    } catch (error) {
+      console.error('Failed to save cart:', error);
+    }
+  }, [state.cart]);
+
+  // Load products from WPGraphQL with fallback
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const data = await fetchGraphQL(GET_PRODUCTS_QUERY);
-        const mappedProducts: Product[] = data.products.nodes.map((node: any) => ({
-          id: node.id,
-          name: node.name,
-          slug: node.slug,
-          description: node.description,
-          shortDescription: node.shortDescription,
-          price: node.price,
-          regularPrice: node.regularPrice,
-          image: node.image,
-          category: node.productCategories?.nodes[0]?.slug || 'uncategorized',
-        }));
-        dispatch({ type: 'SET_PRODUCTS', payload: mappedProducts });
+        if (data?.products?.nodes?.length > 0) {
+          const mappedProducts: Product[] = data.products.nodes.map((node: any) => ({
+            id: node.id,
+            name: node.name,
+            slug: node.slug,
+            description: node.description,
+            shortDescription: node.shortDescription,
+            price: node.price,
+            regularPrice: node.regularPrice,
+            image: node.image,
+            category: node.productCategories?.nodes[0]?.slug || 'uncategorized',
+          }));
+          dispatch({ type: 'SET_PRODUCTS', payload: mappedProducts });
+          console.log('✅ Products loaded from WordPress:', mappedProducts.length);
+        } else {
+          throw new Error('No products returned from API');
+        }
       } catch (error) {
-        console.error("Error loading products from WPGraphQL:", error);
-        dispatch({ type: 'SET_LOADING', payload: false });
+        console.warn('⚠️ WPGraphQL failed, using fallback products:', error);
+        dispatch({ type: 'SET_PRODUCTS', payload: fallbackProducts });
+        console.log('✅ Fallback products loaded:', fallbackProducts.length);
       }
     };
     loadProducts();
