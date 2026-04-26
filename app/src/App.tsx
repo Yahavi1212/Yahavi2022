@@ -16,6 +16,7 @@ import CommunityPage from './pages/CommunityPage';
 import SupportPage from './pages/SupportPage';
 import HomePage from './pages/HomePage';
 import SignupPage from './pages/SignupPage';
+import UserProfilePage from './pages/UserProfilePage';
 
 
 function LoginRedirect() {
@@ -47,8 +48,9 @@ function App() {
             <Route path="/support" element={<SupportPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginRedirect />} />
-            <Route path="/account" element={<Navigate to="/login" replace />} />
-            <Route path="/account/wishlist" element={<Navigate to="/login" replace />} />
+            <Route path="/account" element={<UserProfilePage />} />
+            <Route path="/profile" element={<UserProfilePage />} />
+            <Route path="/my-account" element={<UserProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
