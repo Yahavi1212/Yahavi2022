@@ -13,7 +13,9 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AboutPage from './pages/AboutPage';
 import SupportPage from './pages/SupportPage';
+import HomePage from './pages/HomePage';
 import SignupPage from './pages/SignupPage';
+
 
 function LoginRedirect() {
   useEffect(() => {
@@ -32,7 +34,8 @@ function App() {
         <CartDrawer />
         <main>
           <Routes>
-            <Route path="/" element={<ShopPage />} />
+            <Route path="/" element={<HomePage />} />
+
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/shop/:category" element={<ShopPage />} />
             <Route path="/product/:slug" element={<ProductPage />} />

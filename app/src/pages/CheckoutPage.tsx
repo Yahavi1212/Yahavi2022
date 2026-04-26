@@ -58,9 +58,6 @@ export default function CheckoutPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     checkout(cartTotal);
-  };
-
-  const handlePaymentSuccess = () => {
     dispatch({ type: "CLEAR_CART" });
     setIsComplete(true);
   };

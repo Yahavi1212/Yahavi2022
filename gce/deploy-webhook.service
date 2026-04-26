@@ -1,0 +1,19 @@
+[Unit]
+Description=HackKnow Auto-Deploy Webhook Server
+After=network.target nginx.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/hackknow/gce
+Environment="DEPLOY_PORT=9000"
+Environment="DEPLOY_SECRET=hackknow-deploy-secret"
+Environment="DEPLOY_BRANCH=main"
+ExecStart=/usr/bin/node deploy-webhook.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

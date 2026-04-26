@@ -12,9 +12,9 @@ export default function TrendingSection() {
   const filteredProducts = (() => {
     switch (activeFilter) {
       case "bestseller":
-        return getBestsellers();
+        return getBestsellers(products);
       case "new":
-        return getNewArrivals();
+        return getNewArrivals(products);
       case "free":
         return products.filter((p) => p.isFree);
       default:

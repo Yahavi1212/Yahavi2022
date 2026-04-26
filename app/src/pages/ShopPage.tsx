@@ -18,6 +18,13 @@ export default function ShopPage() {
     ? categories.find((c) => c.slug === categorySlug)
     : null;
 
+  // Helper to parse price string
+  const parsePrice = (price?: string): number => {
+    if (!price) return 0;
+    const numeric = price.replace(/[^0-9.]/g, '');
+    return parseFloat(numeric) || 0;
+  };
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
@@ -41,25 +48,21 @@ export default function ShopPage() {
     }
 
     // Filter by price range
-    result = result.filter(
-      (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
-    );
+    result = result.filter((p) => {
+      const numericPrice = parsePrice(p.price);
+      return numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
+    });
 
     // Sort
     switch (sortBy) {
       case "price-low":
-        result.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
         break;
       case "price-high":
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
         break;
       case "rating":
-        result.sort((a, b) => b.rating - a.rating);
-        break;
-      case "newest":
-        result.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       default:
         break;

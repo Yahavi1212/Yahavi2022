@@ -1,10 +1,10 @@
 
-import React from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 
-const SignupPage = () => {
+const SignupPage: FC = () => {
   return (
     <div className='flex items-center justify-center min-h-screen bg-background p-4'>
       <Card className='w-full max-w-md'>
