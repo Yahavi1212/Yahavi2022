@@ -1,7 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Twitter, Instagram, Youtube, Linkedin } from "lucide-react";
 
 export default function Footer() {
+  const navigate = useNavigate();
+  
+  const scrollToTop = (path: string) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="bg-hack-black text-hack-white">
       {/* Newsletter Banner */}
@@ -81,44 +88,36 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/shop"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   All Products
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/shop?filter=bestseller"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop?filter=bestseller')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Best Sellers
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/shop?filter=new"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop?filter=new')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   New Arrivals
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/shop?filter=free"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop?filter=free')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Free Resources
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/shop?filter=bundle"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
-                >
-                  Bundles
-                </Link>
+                </button>
               </li>
             </ul>
           </div>
@@ -130,44 +129,36 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/shop/themes-templates"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop/themes-templates')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Themes & Templates
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/shop/excel-sheets"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop/excel-sheets')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Excel & Sheets
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/shop/powerpoint-decks"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop/powerpoint-decks')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   PowerPoint Decks
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/shop/digital-marketing"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/shop/digital-marketing')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Digital Marketing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/shop/social-media"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
-                >
-                  Social Media Kits
-                </Link>
+                </button>
               </li>
             </ul>
           </div>
@@ -179,44 +170,36 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/support"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/support')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Help Center
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/support"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/support')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   FAQ
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/support"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/community')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
-                  How Downloads Work
-                </Link>
+                  Community
+                </button>
               </li>
               <li>
-                <Link
-                  to="/support"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/support')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
-                  License Info
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/support"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
-                >
-                  Refund Policy
-                </Link>
+                  Contact Us
+                </button>
               </li>
             </ul>
           </div>
@@ -228,28 +211,28 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/about"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/about')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   About Us
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/community"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/community')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Community
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/about"
-                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors"
+                <button
+                  onClick={() => scrollToTop('/support')}
+                  className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
                   Contact
-                </Link>
+                </button>
               </li>
               <li>
                 <a
@@ -279,24 +262,18 @@ export default function Footer() {
             &copy; 2026 Hackknow. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link
-              to="/support"
+            <button
+              onClick={() => scrollToTop('/support')}
               className="text-xs text-hack-white/40 hover:text-hack-white/70 transition-colors"
             >
               Terms & Conditions
-            </Link>
-            <Link
-              to="/support"
+            </button>
+            <button
+              onClick={() => scrollToTop('/support')}
               className="text-xs text-hack-white/40 hover:text-hack-white/70 transition-colors"
             >
               Privacy Policy
-            </Link>
-            <Link
-              to="/support"
-              className="text-xs text-hack-white/40 hover:text-hack-white/70 transition-colors"
-            >
-              Cookie Policy
-            </Link>
+            </button>
           </div>
         </div>
       </div>
