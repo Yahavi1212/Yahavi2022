@@ -1,270 +1,406 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  User, Package, Heart, Download, CreditCard, MapPin, 
-  Bell, Shield, LogOut, ChevronRight, ShoppingBag,
-  Phone, Mail, Calendar, Edit2, Camera, CheckCircle
+import {
+  ArrowUpRight,
+  Bell,
+  Bot,
+  ChevronRight,
+  Clock3,
+  CreditCard,
+  Download,
+  Heart,
+  LayoutDashboard,
+  LifeBuoy,
+  LogOut,
+  Mail,
+  Package,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  User,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { getCurrentUser, logout } from '@/components/AuthGuard';
+import { useStore } from '@/context/StoreContext';
 
-// Mock user data - replace with actual API calls
-const mockUser = {
-  name: 'Rahul Sharma',
-  email: 'rahul@example.com',
-  phone: '+91 98765 43210',
-  avatar: null,
-  joinedDate: 'January 2024',
-  isVerified: true
-};
+type AccountTab =
+  | 'dashboard'
+  | 'orders'
+  | 'downloads'
+  | 'wishlist'
+  | 'support'
+  | 'profile'
+  | 'assistant';
+
+const sidebarItems: Array<{ id: AccountTab; label: string; icon: typeof LayoutDashboard }> = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'orders', label: 'Orders', icon: Package },
+  { id: 'downloads', label: 'Downloads', icon: Download },
+  { id: 'wishlist', label: 'Wishlist', icon: Heart },
+  { id: 'support', label: 'Support', icon: LifeBuoy },
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'assistant', label: 'AI Assistant', icon: Bot },
+];
 
 const mockOrders = [
-  {
-    id: 'ORD-001',
-    date: '2024-01-15',
-    total: 1299,
-    status: 'Delivered',
-    items: [
-      { name: 'Premium PowerPoint Templates', image: '/product1.jpg', price: 1299 }
-    ]
-  },
-  {
-    id: 'ORD-002',
-    date: '2024-01-10',
-    total: 2499,
-    status: 'Downloaded',
-    items: [
-      { name: 'Excel Dashboard Bundle', image: '/product2.jpg', price: 2499 }
-    ]
-  }
+  { id: 'HK-1042', status: 'Completed', total: '₹499', date: 'Apr 25, 2026', invoice: 'Ready' },
+  { id: 'HK-1038', status: 'Processing', total: '₹299', date: 'Apr 24, 2026', invoice: 'Pending' },
 ];
 
 const mockDownloads = [
-  {
-    id: 1,
-    name: 'Premium PowerPoint Templates',
-    downloadUrl: '#',
-    expiresOn: '2025-01-15',
-    downloadCount: 3
-  },
-  {
-    id: 2,
-    name: 'Excel Dashboard Bundle',
-    downloadUrl: '#',
-    expiresOn: '2025-01-10',
-    downloadCount: 1
-  }
+  { name: 'Premium PowerPoint Templates Pack', updated: 'Version 2.1', license: 'Single-use', action: 'Download' },
+  { name: 'HR Dashboard Excel Template', updated: 'Version 1.4', license: 'Commercial', action: 'Download' },
+  { name: 'Agency Pro WordPress Theme', updated: 'Version 3.0', license: 'Lifetime', action: 'Download' },
 ];
 
-const sidebarItems = [
-  { id: 'profile', label: 'My Profile', icon: User, active: true },
-  { id: 'orders', label: 'My Orders', icon: Package },
-  { id: 'downloads', label: 'My Downloads', icon: Download },
-  { id: 'wishlist', label: 'My Wishlist', icon: Heart },
-  { id: 'payments', label: 'Payment Methods', icon: CreditCard },
-  { id: 'addresses', label: 'Manage Addresses', icon: MapPin },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Login & Security', icon: Shield },
+const supportCards = [
+  { title: 'Raise Ticket', copy: 'Report product issues or billing questions.', icon: Ticket },
+  { title: 'FAQ & Help', copy: 'Open the support center for installation and policy help.', icon: LifeBuoy },
+  { title: 'Refund Request', copy: 'Start a refund conversation with your order ID ready.', icon: CreditCard },
 ];
+
+const aiPrompts = [
+  'Find me a better dashboard for finance tracking',
+  'Show my latest downloads',
+  'Recommend products similar to my last order',
+];
+
+function brutalCard(extra = '') {
+  return `border-4 border-hack-black bg-white p-5 shadow-[6px_6px_0_#1a1a1a] ${extra}`.trim();
+}
 
 export default function UserProfilePage() {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [isEditing, setIsEditing] = useState(false);
-  const [userData, setUserData] = useState(mockUser);
+  const currentUser = getCurrentUser();
+  const { state } = useStore();
+  const [activeTab, setActiveTab] = useState<AccountTab>('dashboard');
 
-  const renderProfile = () => (
+  const user = currentUser ?? {
+    name: 'Hackknow Member',
+    email: 'member@hackknow.com',
+    phone: '+91 00000 00000',
+    joinedDate: 'April 2026',
+    isVerified: true,
+  };
+
+  const wishlistProducts = useMemo(
+    () => state.products.filter((product) => state.wishlist.includes(product.id)).slice(0, 6),
+    [state.products, state.wishlist]
+  );
+
+  const recommendedProducts = useMemo(() => state.products.slice(0, 4), [state.products]);
+  const recentProducts = useMemo(() => state.products.slice(4, 8), [state.products]);
+
+  const renderDashboard = () => (
     <div className="space-y-6">
-      {/* Profile Header */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-hack-yellow to-hack-orange flex items-center justify-center text-3xl font-bold text-hack-black">
-              {userData.name.charAt(0)}
-            </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100">
-              <Camera className="w-4 h-4" />
-            </button>
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-black/70">
+          Dashboard Home
+        </p>
+        <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="font-display text-4xl font-bold uppercase text-hack-black">
+              Welcome back, {String(user.name).split(' ')[0]}.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm font-medium text-hack-black/75">
+              This is the main user zone after signup. Orders, downloads, support, wishlist, and
+              Yahavi AI are all reachable from here.
+            </p>
           </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-1">{userData.name}</h2>
-            <p className="text-gray-500">{userData.email}</p>
-            <p className="text-gray-500">{userData.phone}</p>
-            <div className="flex items-center gap-2 mt-2">
-              {userData.isVerified && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                  <CheckCircle className="w-4 h-4" />
-                  Verified
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="border-4 border-hack-black bg-white px-4 py-3 shadow-[4px_4px_0_#ff56f0]">
+              <p className="text-xs font-bold uppercase">Orders</p>
+              <p className="mt-2 text-2xl font-bold">{mockOrders.length}</p>
+            </div>
+            <div className="border-4 border-hack-black bg-white px-4 py-3 shadow-[4px_4px_0_#ff56f0]">
+              <p className="text-xs font-bold uppercase">Downloads</p>
+              <p className="mt-2 text-2xl font-bold">{mockDownloads.length}</p>
+            </div>
+            <div className="border-4 border-hack-black bg-white px-4 py-3 shadow-[4px_4px_0_#ff56f0]">
+              <p className="text-xs font-bold uppercase">Wishlist</p>
+              <p className="mt-2 text-2xl font-bold">{state.wishlist.length}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className={brutalCard()}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-magenta">
+                Recent Activity
+              </p>
+              <h3 className="mt-2 font-display text-2xl font-bold uppercase">What changed lately</h3>
+            </div>
+            <Clock3 className="h-6 w-6" />
+          </div>
+          <div className="mt-5 space-y-3">
+            {[
+              'Account created and dashboard unlocked',
+              'WordPress-backed downloads are ready to be connected next',
+              'Your support and profile options are live in this panel',
+            ].map((item, index) => (
+              <div key={item} className="flex items-start gap-3 border-4 border-hack-black bg-hack-white px-4 py-3">
+                <span className="inline-flex h-7 w-7 items-center justify-center bg-hack-black font-bold text-white">
+                  {index + 1}
                 </span>
-              )}
-              <span className="text-sm text-gray-400">Member since {userData.joinedDate}</span>
-            </div>
+                <p className="text-sm font-semibold text-hack-black">{item}</p>
+              </div>
+            ))}
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-2"
+        </section>
+
+        <section className={brutalCard('bg-hack-black text-white shadow-[6px_6px_0_#fff055]')}>
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-yellow">
+            Latest Offers
+          </p>
+          <h3 className="mt-2 font-display text-2xl font-bold uppercase">Fast wins for this week</h3>
+          <div className="mt-5 space-y-3">
+            {[
+              'New arrival bundles added to shop',
+              'Download center now pinned in sidebar',
+              'Tech Blogs & News live on hackknow.space',
+            ].map((item) => (
+              <div key={item} className="border-4 border-hack-white bg-hack-magenta px-4 py-3 text-sm font-bold text-hack-black">
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <section className={brutalCard()}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-magenta">
+              Recommended Products
+            </p>
+            <h3 className="mt-2 font-display text-2xl font-bold uppercase">Suggested for you</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('assistant')}
+            className="inline-flex items-center gap-2 border-4 border-hack-black bg-hack-yellow px-4 py-2 text-sm font-bold uppercase shadow-[4px_4px_0_#ff56f0]"
           >
-            <Edit2 className="w-4 h-4" />
-            Edit Profile
-          </Button>
+            Ask Yahavi AI
+            <ArrowUpRight className="h-4 w-4" />
+          </button>
         </div>
-      </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {recommendedProducts.map((product) => (
+            <Link
+              key={product.id}
+              to={`/product/${product.slug}`}
+              className="border-4 border-hack-black bg-hack-white p-4 shadow-[4px_4px_0_#fff055] transition-transform hover:-translate-y-1"
+            >
+              <p className="text-xs font-bold uppercase text-hack-magenta">{product.category}</p>
+              <h4 className="mt-2 font-display text-lg font-bold uppercase text-hack-black">{product.name}</h4>
+              <p className="mt-3 text-sm font-semibold text-hack-black/70">{product.price || 'Price on request'}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-hack-black">12</div>
-          <div className="text-sm text-gray-500">Total Orders</div>
+      <section className={brutalCard()}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-magenta">
+          Latest Products
+        </p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {recentProducts.map((product) => (
+            <div key={product.id} className="border-4 border-hack-black bg-hack-yellow/35 p-4">
+              <h4 className="font-display text-lg font-bold uppercase">{product.name}</h4>
+              <p className="mt-2 text-sm font-semibold text-hack-black/70">{product.shortDescription || product.category}</p>
+            </div>
+          ))}
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-hack-black">8</div>
-          <div className="text-sm text-gray-500">Downloads</div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-hack-black">5</div>
-          <div className="text-sm text-gray-500">Wishlist Items</div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-hack-black">₹12K</div>
-          <div className="text-sm text-gray-500">Total Spent</div>
-        </div>
-      </div>
-
-      {/* Personal Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold mb-4">Personal Information</h3>
-        {isEditing ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Full Name</label>
-              <Input 
-                value={userData.name} 
-                onChange={(e) => setUserData({...userData, name: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <Input 
-                type="email"
-                value={userData.email} 
-                onChange={(e) => setUserData({...userData, email: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Phone Number *</label>
-              <Input 
-                type="tel"
-                value={userData.phone} 
-                onChange={(e) => setUserData({...userData, phone: e.target.value})}
-                placeholder="+91 98765 43210"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">Required for order updates</p>
-            </div>
-            <div className="flex items-end">
-              <Button onClick={() => setIsEditing(false)} className="w-full">Save Changes</Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-gray-500">Full Name</p>
-                <p className="font-medium">{userData.name}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-gray-500">Email</p>
-                <p className="font-medium">{userData.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-gray-500">Phone Number *</p>
-                <p className="font-medium">{userData.phone}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-gray-500">Member Since</p>
-                <p className="font-medium">{userData.joinedDate}</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      </section>
     </div>
   );
 
   const renderOrders = () => (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">My Orders</h2>
+    <div className="space-y-5">
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">My Orders</p>
+        <h2 className="mt-2 font-display text-3xl font-bold uppercase">Order history and status</h2>
+      </section>
       {mockOrders.map((order) => (
-        <div key={order.id} className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 pb-4 border-b">
+        <div key={order.id} className={brutalCard()}>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm text-gray-500">Order #{order.id}</p>
-              <p className="text-sm text-gray-500">Placed on {order.date}</p>
+              <p className="font-mono text-xs font-bold uppercase text-hack-magenta">{order.id}</p>
+              <h3 className="mt-2 font-display text-2xl font-bold uppercase">{order.status}</h3>
+              <p className="mt-2 text-sm font-medium text-hack-black/70">Placed on {order.date}</p>
             </div>
-            <div className="text-right">
-              <p className="font-bold text-lg">₹{order.total}</p>
-              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
-                order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                order.status === 'Downloaded' ? 'bg-blue-100 text-blue-700' :
-                'bg-yellow-100 text-yellow-700'
-              }`}>
-                <CheckCircle className="w-4 h-4" />
-                {order.status}
-              </span>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="border-4 border-hack-black bg-hack-white px-4 py-3 text-sm font-bold">Total: {order.total}</div>
+              <div className="border-4 border-hack-black bg-hack-white px-4 py-3 text-sm font-bold">Invoice: {order.invoice}</div>
+              <button className="border-4 border-hack-black bg-hack-black px-4 py-3 text-sm font-bold uppercase text-white">
+                View Order
+              </button>
             </div>
           </div>
-          {order.items.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium">{item.name}</h3>
-                <p className="text-sm text-gray-500">₹{item.price}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">Download</Button>
-                <Button variant="outline" size="sm">View Details</Button>
-              </div>
-            </div>
-          ))}
         </div>
       ))}
     </div>
   );
 
   const renderDownloads = () => (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">My Downloads</h2>
-      <div className="grid gap-4">
-        {mockDownloads.map((download) => (
-          <div key={download.id} className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-hack-yellow/20 to-hack-orange/20 rounded-lg flex items-center justify-center">
-                  <Download className="w-8 h-8 text-hack-black" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{download.name}</h3>
-                  <p className="text-sm text-gray-500">Expires on {download.expiresOn}</p>
-                  <p className="text-sm text-gray-500">Downloaded {download.downloadCount} times</p>
-                </div>
+    <div className="space-y-5">
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">Downloads</p>
+        <h2 className="mt-2 font-display text-3xl font-bold uppercase">Re-download anytime</h2>
+      </section>
+      {mockDownloads.map((download) => (
+        <div key={download.name} className={brutalCard()}>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="font-display text-2xl font-bold uppercase">{download.name}</h3>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
+                <span className="border-4 border-hack-black bg-hack-yellow px-3 py-1">{download.updated}</span>
+                <span className="border-4 border-hack-black bg-hack-white px-3 py-1">{download.license}</span>
               </div>
-              <Button className="bg-hack-black hover:bg-hack-black/90">
-                <Download className="w-4 h-4 mr-2" />
-                Download Now
-              </Button>
             </div>
+            <button className="border-4 border-hack-black bg-hack-black px-5 py-3 text-sm font-bold uppercase text-white">
+              {download.action}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderWishlist = () => (
+    <div className="space-y-5">
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">Wishlist</p>
+        <h2 className="mt-2 font-display text-3xl font-bold uppercase">Saved for later</h2>
+      </section>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {(wishlistProducts.length ? wishlistProducts : recommendedProducts.slice(0, 3)).map((product) => (
+          <Link
+            key={product.id}
+            to={`/product/${product.slug}`}
+            className="border-4 border-hack-black bg-white p-4 shadow-[4px_4px_0_#ff56f0] transition-transform hover:-translate-y-1"
+          >
+            <p className="text-xs font-bold uppercase text-hack-magenta">{product.category}</p>
+            <h3 className="mt-2 font-display text-xl font-bold uppercase">{product.name}</h3>
+            <p className="mt-2 text-sm font-semibold text-hack-black/70">{product.price || 'Free'}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSupport = () => (
+    <div className="space-y-5">
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">Support Center</p>
+        <h2 className="mt-2 font-display text-3xl font-bold uppercase">Help, tickets, refunds</h2>
+      </section>
+      <div className="grid gap-4 md:grid-cols-3">
+        {supportCards.map(({ title, copy, icon: Icon }) => (
+          <div key={title} className={brutalCard()}>
+            <Icon className="h-7 w-7" />
+            <h3 className="mt-4 font-display text-xl font-bold uppercase">{title}</h3>
+            <p className="mt-3 text-sm font-medium text-hack-black/70">{copy}</p>
+          </div>
+        ))}
+      </div>
+      <div className={brutalCard('bg-hack-black text-white shadow-[6px_6px_0_#fff055]')}>
+        <h3 className="font-display text-2xl font-bold uppercase">Quick support options</h3>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link to="/support" className="border-4 border-hack-white bg-white px-4 py-2 text-sm font-bold uppercase text-hack-black">
+            FAQ
+          </Link>
+          <a href="mailto:support@hackknow.com" className="border-4 border-hack-white bg-hack-magenta px-4 py-2 text-sm font-bold uppercase text-hack-black">
+            Email Support
+          </a>
+          <button className="border-4 border-hack-white bg-hack-yellow px-4 py-2 text-sm font-bold uppercase text-hack-black">
+            Refund Request
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProfile = () => (
+    <div className="space-y-5">
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">My Account</p>
+        <h2 className="mt-2 font-display text-3xl font-bold uppercase">Profile and billing basics</h2>
+      </section>
+      <div className={brutalCard()}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="border-4 border-hack-black bg-hack-white p-4">
+            <p className="text-xs font-bold uppercase text-hack-magenta">Name</p>
+            <p className="mt-2 text-lg font-bold">{user.name}</p>
+          </div>
+          <div className="border-4 border-hack-black bg-hack-white p-4">
+            <p className="text-xs font-bold uppercase text-hack-magenta">Email</p>
+            <p className="mt-2 text-lg font-bold">{user.email}</p>
+          </div>
+          <div className="border-4 border-hack-black bg-hack-white p-4">
+            <p className="text-xs font-bold uppercase text-hack-magenta">Phone</p>
+            <p className="mt-2 text-lg font-bold">{user.phone}</p>
+          </div>
+          <div className="border-4 border-hack-black bg-hack-white p-4">
+            <p className="text-xs font-bold uppercase text-hack-magenta">Member Since</p>
+            <p className="mt-2 text-lg font-bold">{user.joinedDate}</p>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className={brutalCard()}>
+          <Mail className="h-6 w-6" />
+          <h3 className="mt-4 font-display text-xl font-bold uppercase">Email & contact</h3>
+          <p className="mt-2 text-sm font-medium text-hack-black/70">Keep order updates and support replies on the right inbox.</p>
+        </div>
+        <div className={brutalCard()}>
+          <ShieldCheck className="h-6 w-6" />
+          <h3 className="mt-4 font-display text-xl font-bold uppercase">Security</h3>
+          <p className="mt-2 text-sm font-medium text-hack-black/70">Password, sessions, and future 2FA can live here.</p>
+        </div>
+        <div className={brutalCard()}>
+          <Phone className="h-6 w-6" />
+          <h3 className="mt-4 font-display text-xl font-bold uppercase">Billing basics</h3>
+          <p className="mt-2 text-sm font-medium text-hack-black/70">Billing details and checkout defaults can be added here later.</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAssistant = () => (
+    <div className="space-y-5">
+      <section className={brutalCard('bg-hack-yellow')}>
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">Yahavi AI</p>
+        <h2 className="mt-2 font-display text-3xl font-bold uppercase">Ask for product help fast</h2>
+      </section>
+      <div className={brutalCard('bg-hack-black text-white shadow-[6px_6px_0_#fff055]')}>
+        <p className="text-sm font-medium text-white/80">
+          This panel is the starter shell for product discovery, download help, support prompts,
+          and recommendations.
+        </p>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {aiPrompts.map((prompt) => (
+            <button
+              key={prompt}
+              className="border-4 border-hack-white bg-white px-4 py-4 text-left text-sm font-bold text-hack-black shadow-[4px_4px_0_#ff56f0]"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          { icon: Sparkles, title: 'Find products', copy: 'Match tools, templates, and kits to the user need.' },
+          { icon: Download, title: 'Download help', copy: 'Guide users to files, versions, and updates.' },
+          { icon: Bell, title: 'Issue solving', copy: 'Surface next action for refunds, support, and bugs.' },
+        ].map(({ icon: Icon, title, copy }) => (
+          <div key={title} className={brutalCard()}>
+            <Icon className="h-6 w-6" />
+            <h3 className="mt-4 font-display text-xl font-bold uppercase">{title}</h3>
+            <p className="mt-2 text-sm font-medium text-hack-black/70">{copy}</p>
           </div>
         ))}
       </div>
@@ -273,67 +409,119 @@ export default function UserProfilePage() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'profile': return renderProfile();
-      case 'orders': return renderOrders();
-      case 'downloads': return renderDownloads();
-      default: return renderProfile();
+      case 'orders':
+        return renderOrders();
+      case 'downloads':
+        return renderDownloads();
+      case 'wishlist':
+        return renderWishlist();
+      case 'support':
+        return renderSupport();
+      case 'profile':
+        return renderProfile();
+      case 'assistant':
+        return renderAssistant();
+      case 'dashboard':
+      default:
+        return renderDashboard();
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Link to="/" className="hover:text-hack-black">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-hack-black">My Account</span>
+    <div className="min-h-screen bg-hack-white pb-12">
+      <div className="border-b-4 border-hack-black bg-hack-black text-white">
+        <div className="w-full px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-white/65">
+            <Link to="/" className="hover:text-hack-yellow">
+              Home
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-white">My Account</span>
           </div>
         </div>
       </div>
 
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-4">
-              <div className="p-4 bg-hack-black text-white">
-                <p className="text-sm text-white/60">Hello,</p>
-                <p className="font-bold truncate">{userData.name}</p>
+      <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid gap-8 xl:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="xl:sticky xl:top-6 xl:self-start">
+            <div className="border-4 border-hack-black bg-hack-yellow p-5 shadow-[8px_8px_0_#1a1a1a]">
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-black/70">
+                Account Zone
+              </p>
+              <h1 className="mt-3 font-display text-3xl font-bold uppercase text-hack-black">
+                {String(user.name).split(' ')[0]}'s panel
+              </h1>
+              <div className="mt-5 grid gap-3">
+                <div className="border-4 border-hack-black bg-white px-4 py-3">
+                  <p className="text-xs font-bold uppercase text-hack-magenta">Email</p>
+                  <p className="mt-2 text-sm font-bold">{user.email}</p>
+                </div>
+                <div className="border-4 border-hack-black bg-white px-4 py-3">
+                  <p className="text-xs font-bold uppercase text-hack-magenta">Phone</p>
+                  <p className="mt-2 text-sm font-bold">{user.phone}</p>
+                </div>
               </div>
-              <nav className="p-2">
+            </div>
+
+            <nav className="mt-6 border-4 border-hack-black bg-white p-4 shadow-[8px_8px_0_#ff56f0]">
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-magenta">
+                Main User Options
+              </p>
+              <div className="mt-4 space-y-3">
                 {sidebarItems.map((item) => {
                   const Icon = item.icon;
+                  const active = activeTab === item.id;
                   return (
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-                        activeTab === item.id
-                          ? 'bg-hack-yellow/10 text-hack-black font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
+                      className={`flex w-full items-center justify-between border-4 px-4 py-3 text-left text-sm font-bold uppercase transition-transform hover:-translate-y-1 ${
+                        active
+                          ? 'border-hack-black bg-hack-yellow text-hack-black shadow-[4px_4px_0_#1a1a1a]'
+                          : 'border-hack-black bg-white text-hack-black'
                       }`}
                     >
-                      <Icon className="w-5 h-5" />
-                      {item.label}
+                      <span className="flex items-center gap-3">
+                        <Icon className="h-5 w-5" />
+                        {item.label}
+                      </span>
+                      <ArrowUpRight className="h-4 w-4" />
                     </button>
                   );
                 })}
-                <div className="border-t mt-2 pt-2">
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                  </button>
-                </div>
-              </nav>
-            </div>
-          </div>
+              </div>
 
-          {/* Main Content */}
-          <div className="flex-1">
-            {renderContent()}
-          </div>
+              <div className="mt-4 border-t-4 border-hack-black pt-4">
+                <button
+                  onClick={logout}
+                  className="flex w-full items-center justify-between border-4 border-hack-black bg-hack-black px-4 py-3 text-left text-sm font-bold uppercase text-white"
+                >
+                  <span className="flex items-center gap-3">
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                  </span>
+                  <ArrowUpRight className="h-4 w-4" />
+                </button>
+              </div>
+            </nav>
+
+            <div className="mt-6 border-4 border-hack-black bg-hack-magenta p-4 shadow-[6px_6px_0_#1a1a1a]">
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-hack-black/70">
+                Top Must-Have
+              </p>
+              <ul className="mt-3 space-y-2 text-sm font-bold uppercase text-hack-black">
+                <li>Dashboard</li>
+                <li>Orders</li>
+                <li>Downloads</li>
+                <li>Support</li>
+                <li>Profile</li>
+                <li>Wishlist</li>
+                <li>AI Assistant</li>
+              </ul>
+            </div>
+          </aside>
+
+          <main>{renderContent()}</main>
         </div>
       </div>
     </div>

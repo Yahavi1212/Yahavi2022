@@ -238,12 +238,14 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <button
-                  onClick={() => scrollToTop('/community')}
+                <a
+                  href="https://hackknow.space"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-hack-white/60 hover:text-hack-yellow transition-colors text-left"
                 >
-                  Blog
-                </button>
+                  Tech Blogs & News
+                </a>
               </li>
               <li>
                 <button
