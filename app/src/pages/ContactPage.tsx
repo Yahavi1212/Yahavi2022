@@ -188,7 +188,7 @@ const ContactPage = () => {
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        placeholder="john@example.com"
+                        placeholder="you@yourdomain.com"
                         className="h-12"
                         required
                       />

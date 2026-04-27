@@ -1,8 +1,8 @@
 
-// Disabled: Yahavi AI Widget not available (cdn.yahavi.ai returns 404)
-// TODO: Replace with HackKnow custom support widget or chat system
+// Note: Yahavi AI Widget temporarily disabled - external CDN unavailable
+// Future: Implement HackKnow branded support widget with Zendesk/Intercom
 const YahaviAI = () => {
-  return null; // Widget disabled - no external script loading
+  return null; // Support widget placeholder - no external dependencies
 };
 
 export default YahaviAI;

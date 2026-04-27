@@ -72,7 +72,7 @@ const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="you@yourdomain.com"
                   className="w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-xl h-12 pl-4 focus:border-hack-yellow focus:ring-1 focus:ring-hack-yellow"
                   required
                 />

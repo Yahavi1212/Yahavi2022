@@ -4,14 +4,9 @@ import type { Product } from "@/data/products";
 import { fallbackProducts } from "@/data/products";
 import { fetchGraphQL, GET_PRODUCTS_QUERY } from "@/lib/graphql-client";
 import { initializeRazorpayPayment } from "@/lib/razorpay";
+import { parsePriceValue } from "@/lib/utils";
 
 // Backend provides canonical slugs - no frontend normalization needed
-function parsePriceValue(price?: string): number {
-  if (!price) return 0;
-  const numeric = price.replace(/[^0-9.]/g, "");
-  return Number.parseFloat(numeric) || 0;
-}
-
 function extractCategorySlugs(categoryNodes?: Array<{ slug?: string | null }>): string[] {
   const slugs = new Set<string>();
   for (const node of categoryNodes ?? []) {
@@ -192,8 +187,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const cartTotal = useMemo(
     () =>
       state.cart.reduce((sum, item) => {
-        const raw = item.product.price?.replace(/[^0-9.]/g, '') || '0';
-        return sum + parseFloat(raw) * item.quantity;
+        return sum + parsePriceValue(item.product.price) * item.quantity;
       }, 0),
     [state.cart]
   );

@@ -1,5 +1,8 @@
 
-export const loadRazorpay = () => {
+import { toast } from 'sonner';
+import type { RazorpayOptions, RazorpayResponse, RazorpayError } from '@/types/razorpay';
+
+export const loadRazorpay = (): Promise<boolean> => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -9,42 +12,41 @@ export const loadRazorpay = () => {
   });
 };
 
-export const initializeRazorpayPayment = async (options: any) => {
+export const initializeRazorpayPayment = async (options: Partial<RazorpayOptions>) => {
   // Validate Razorpay key
   const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-  
+
   if (!razorpayKey || razorpayKey === 'rzp_live_REPLACE_WITH_YOUR_KEY') {
     console.error('❌ Razorpay key not configured');
-    alert('Payment system is not configured. Please contact support.');
+    toast.error('Payment system is not configured. Please contact support.');
     return;
   }
 
   if (!razorpayKey.startsWith('rzp_live_') && !razorpayKey.startsWith('rzp_test_')) {
     console.error('❌ Invalid Razorpay key format');
-    alert('Payment configuration error. Please contact support.');
+    toast.error('Payment configuration error. Please contact support.');
     return;
   }
 
   const isLoaded = await loadRazorpay();
   if (!isLoaded) {
-    alert('❌ Payment system failed to load. Please check your internet connection.');
+    toast.error('Payment system failed to load. Please check your internet connection.');
     return;
   }
 
   try {
-    const rzp = new (window as any).Razorpay({
+    const rzp = new window.Razorpay({
       key: razorpayKey,
       name: 'Hackknow',
       description: 'Digital Products Marketplace',
-      // image: 'https://hackknow.com/logo.png', // Add your logo URL here
       ...options,
       theme: {
-        color: '#FFD700', // HackKnow yellow
+        color: '#FFD700',
       },
-      handler: function (response: any) {
+      handler: function (response: RazorpayResponse) {
         console.log('✅ Payment Successful:', response);
-        alert('🎉 Payment Successful!\nPayment ID: ' + response.razorpay_payment_id);
-        // TODO: Send payment details to backend to create order
+        toast.success('Payment successful! Processing your order...');
+        // Pending: WooCommerce order creation API integration after payment success
       },
       modal: {
         ondismiss: function () {
@@ -55,14 +57,14 @@ export const initializeRazorpayPayment = async (options: any) => {
       },
     });
 
-    rzp.on('payment.failed', function (response: any) {
+    rzp.on('payment.failed', function (response: RazorpayError) {
       console.error('❌ Payment failed:', response.error);
-      alert('❌ Payment failed: ' + response.error.description);
+      toast.error('Payment failed: ' + response.error.description);
     });
 
     rzp.open();
   } catch (error) {
     console.error('❌ Razorpay initialization error:', error);
-    alert('❌ Could not initialize payment. Please try again.');
+    toast.error('Could not initialize payment. Please try again.');
   }
 };
