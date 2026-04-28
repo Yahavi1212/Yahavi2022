@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import { toast } from "sonner";
 import type { Product } from "@/data/products";
 import { fallbackProducts } from "@/data/products";
 import { fetchGraphQL, GET_PRODUCTS_QUERY } from "@/lib/graphql-client";
-import { initializeRazorpayPayment } from "@/lib/razorpay";
-import { parsePriceValue } from "@/lib/utils";
+import { initializeRazorpayPayment, type RazorpayCallbacks } from "@/lib/razorpay";
+import { parsePriceValue, rewriteWpUrl } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth";
 
 interface ProductCategoryNode {
   slug?: string | null;
@@ -75,7 +77,10 @@ const initialState: StoreState = {
 interface StoreContextValue {
   state: StoreState;
   dispatch: React.Dispatch<StoreAction>;
-  checkout: (amount: number) => void;
+  checkout: (
+    options: { amount: number; orderId?: string; keyId?: string },
+    callbacks?: RazorpayCallbacks
+  ) => void;
   cartCount: number;
   cartTotal: number;
 }
@@ -139,10 +144,15 @@ function storeReducer(state: StoreState, action: StoreAction): StoreState {
   }
 }
 
+function getCartStorageKey(): string {
+  const user = getCurrentUser();
+  return user?.id ? `hackknow-cart:${user.id}` : "hackknow-cart";
+}
+
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const loadCartFromStorage = (): CartItem[] => {
     try {
-      const saved = localStorage.getItem("hackknow-cart");
+      const saved = localStorage.getItem(getCartStorageKey());
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -156,7 +166,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     try {
-      localStorage.setItem("hackknow-cart", JSON.stringify(state.cart));
+      localStorage.setItem(getCartStorageKey(), JSON.stringify(state.cart));
     } catch (error) {
       console.error("Failed to save cart:", error);
     }
@@ -170,6 +180,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const mappedProducts: Product[] = data.products.nodes.map((node: ProductNode) => {
             const categories = extractCategorySlugs(node.productCategories?.nodes);
             const price = node.price;
+            const image = node.image
+              ? { ...node.image, sourceUrl: rewriteWpUrl(node.image.sourceUrl) }
+              : node.image;
 
             return {
               id: node.databaseId?.toString() || node.id,
@@ -179,7 +192,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               shortDescription: node.shortDescription,
               price,
               regularPrice: node.regularPrice,
-              image: node.image,
+              image,
               category: categories[0] || "uncategorized",
               categories,
               isFree: parsePriceValue(price) === 0 || categories.includes("free-resources"),
@@ -187,14 +200,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
 
           dispatch({ type: "SET_PRODUCTS", payload: mappedProducts });
-          console.log("Products loaded from WordPress:", mappedProducts.length);
         } else {
           throw new Error("No products returned from API");
         }
       } catch (error) {
         console.warn("WPGraphQL failed, using fallback products:", error);
+        toast.error("Could not load the live catalog. Showing cached products.");
         dispatch({ type: "SET_PRODUCTS", payload: fallbackProducts });
-        console.log("Fallback products loaded:", fallbackProducts.length);
       }
     };
 
@@ -212,13 +224,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [state.cart]
   );
 
-  const checkout = (amount: number) => {
-    initializeRazorpayPayment({
-      amount: amount * 100,
-      currency: "INR",
-      name: "HackKnow Store",
-      description: "Purchase from HackKnow",
-    });
+  const checkout: StoreContextValue["checkout"] = (
+    { amount, orderId, keyId },
+    callbacks = {}
+  ) => {
+    initializeRazorpayPayment(
+      {
+        amount: Math.round(amount * 100),
+        currency: "INR",
+        name: "HackKnow Store",
+        description: "Purchase from HackKnow",
+        order_id: orderId,
+        key: keyId,
+      },
+      callbacks
+    );
   };
 
   return (

@@ -1,8 +1,8 @@
 import type { FC, FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, BadgeCheck, Lock, Mail, Phone, Sparkles, User } from 'lucide-react';
-import { login } from '@/lib/auth';
+import { ArrowLeft, BadgeCheck, Lock, Mail, Phone, Sparkles, User } from 'lucide-react';
+import { registerWithWordPress } from '@/lib/auth';
 
 const perks = [
   'Fast order tracking',
@@ -28,19 +28,14 @@ const SignupPage: FC = () => {
   });
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const passwordsMatch = useMemo(
     () => formData.password.length >= 8 && formData.password === formData.confirmPassword,
     [formData.password, formData.confirmPassword]
   );
 
-  const handleGoogleSignIn = () => {
-    // Google auth disabled until backend OAuth is configured
-    // TODO: Implement Google OAuth via Nextend Social Login plugin on WordPress
-    alert('Google Sign In coming soon. Please use email signup.');
-  };
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!passwordsMatch) {
@@ -53,17 +48,26 @@ const SignupPage: FC = () => {
       return;
     }
 
-    const user = {
-      name: formData.fullName,
-      email: formData.email,
-      phone: formData.phone,
-      joinedDate: new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }),
-      isVerified: true,
-    };
-
-    login(`hackknow-local-${Date.now()}`, user);
     setError('');
-    navigate('/account');
+    setIsLoading(true);
+    try {
+      await registerWithWordPress({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+      });
+      navigate('/account');
+    } catch (err) {
+      console.error('Signup failed:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not create your account. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -136,18 +140,10 @@ const SignupPage: FC = () => {
                   Get Your Dashboard
                 </h2>
                 <p className="mt-3 max-w-md text-sm font-medium text-hack-black/65">
-                  Google entry can route through WordPress auth. Real email OTP and phone OTP need
-                  backend auth wiring before they can be switched on safely.
+                  Account creation is wired to WordPress JWT auth. Email/phone OTP can be added
+                  later through the same backend.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                className="inline-flex items-center gap-2 border-4 border-hack-black bg-hack-yellow px-4 py-2 text-sm font-bold uppercase text-hack-black shadow-[4px_4px_0_#ff56f0] transition-transform hover:-translate-y-1"
-              >
-                Google
-                <ArrowUpRight className="h-4 w-4" />
-              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -245,11 +241,11 @@ const SignupPage: FC = () => {
                 />
                 <span className="text-sm font-medium text-hack-black">
                   I agree to the{' '}
-                  <Link to="/support" className="font-bold underline underline-offset-4">
+                  <Link to="/terms" className="font-bold underline underline-offset-4">
                     Terms
                   </Link>{' '}
                   and{' '}
-                  <Link to="/support" className="font-bold underline underline-offset-4">
+                  <Link to="/privacy" className="font-bold underline underline-offset-4">
                     Privacy Policy
                   </Link>
                   .
@@ -265,9 +261,9 @@ const SignupPage: FC = () => {
               <button
                 type="submit"
                 className="w-full border-4 border-hack-black bg-hack-yellow px-5 py-4 font-display text-lg font-bold uppercase text-hack-black shadow-[6px_6px_0_#1a1a1a] transition-transform hover:-translate-y-1 disabled:cursor-not-allowed disabled:bg-hack-black/10 disabled:shadow-none"
-                disabled={!agreeTerms || !passwordsMatch}
+                disabled={!agreeTerms || !passwordsMatch || isLoading}
               >
-                Create Account And Open Dashboard
+                {isLoading ? 'Creating account...' : 'Create Account And Open Dashboard'}
               </button>
             </form>
 

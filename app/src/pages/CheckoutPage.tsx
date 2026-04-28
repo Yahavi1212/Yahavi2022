@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, ChevronLeft, Lock } from "lucide-react";
+import { toast } from "sonner";
 import { useStore } from "@/context/StoreContext";
 import { Button } from "@/components/ui/button";
+import { createServerOrder, verifyServerPayment } from "@/lib/checkout-api";
 
 export default function CheckoutPage() {
   const { state, cartTotal, dispatch, checkout } = useStore();
   const [isComplete, setIsComplete] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -17,9 +20,7 @@ export default function CheckoutPage() {
   if (state.cart.length === 0 && !isComplete) {
     return (
       <div className="pt-32 pb-20 text-center">
-        <h1 className="font-display font-bold text-2xl mb-4">
-          Your cart is empty
-        </h1>
+        <h1 className="font-display font-bold text-2xl mb-4">Your cart is empty</h1>
         <Link to="/shop">
           <Button className="bg-hack-black text-hack-white rounded-full px-8">
             Start Shopping
@@ -37,12 +38,10 @@ export default function CheckoutPage() {
             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="font-display font-bold text-3xl mb-3">
-              Order Confirmed!
-            </h1>
+            <h1 className="font-display font-bold text-3xl mb-3">Order Confirmed!</h1>
             <p className="text-hack-black/60 mb-8">
-              Thank you for your purchase. Your order has been confirmed and
-              you&apos;ll receive a download link via email shortly.
+              Thank you for your purchase. Your order has been confirmed and you&apos;ll receive a
+              download link via email shortly.
             </p>
             <Link to="/shop">
               <Button className="bg-hack-black text-hack-white hover:bg-hack-black/80 rounded-full px-8 h-12">
@@ -55,11 +54,68 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    checkout(cartTotal);
-    dispatch({ type: "CLEAR_CART" });
-    setIsComplete(true);
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      const serverOrder = await createServerOrder({
+        cart: state.cart.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+        })),
+        customer: {
+          email: formData.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+        },
+      });
+
+      checkout(
+        {
+          amount: serverOrder.amount / 100,
+          orderId: serverOrder.razorpay_order_id,
+          keyId: serverOrder.key_id,
+        },
+        {
+          onSuccess: async (response) => {
+            try {
+              await verifyServerPayment({
+                order_id: serverOrder.order_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              dispatch({ type: "CLEAR_CART" });
+              setIsComplete(true);
+              toast.success("Payment verified. Order confirmed!");
+            } catch (err) {
+              console.error("Verification failed:", err);
+              toast.error("Payment received but verification failed. Support has been notified.");
+            } finally {
+              setIsProcessing(false);
+            }
+          },
+          onFailure: (error) => {
+            toast.error(`Payment failed: ${error?.description ?? "Unknown error"}`);
+            setIsProcessing(false);
+          },
+          onDismiss: () => {
+            setIsProcessing(false);
+          },
+        }
+      );
+    } catch (err) {
+      console.error("Order creation failed:", err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Could not start checkout. Please try again."
+      );
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -81,9 +137,7 @@ export default function CheckoutPage() {
             <form onSubmit={handleSubmit} className="lg:col-span-3 space-y-6">
               {/* Contact */}
               <div className="bg-white rounded-2xl border border-hack-black/5 p-6">
-                <h2 className="font-display font-bold text-lg mb-4">
-                  Contact Information
-                </h2>
+                <h2 className="font-display font-bold text-lg mb-4">Contact Information</h2>
                 <div className="space-y-4">
                   <input
                     type="email"
@@ -106,9 +160,7 @@ export default function CheckoutPage() {
 
               {/* Billing */}
               <div className="bg-white rounded-2xl border border-hack-black/5 p-6">
-                <h2 className="font-display font-bold text-lg mb-4">
-                  Billing Details
-                </h2>
+                <h2 className="font-display font-bold text-lg mb-4">Billing Details</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <input
                     type="text"
@@ -131,10 +183,13 @@ export default function CheckoutPage() {
 
               <Button
                 type="submit"
-                className="w-full h-14 bg-hack-black text-hack-white hover:bg-hack-black/80 rounded-full font-bold text-base gap-2"
+                disabled={isProcessing}
+                className="w-full h-14 bg-hack-black text-hack-white hover:bg-hack-black/80 rounded-full font-bold text-base gap-2 disabled:opacity-60"
               >
                 <Lock className="w-4 h-4" />
-                Pay with Razorpay — ₹{cartTotal.toFixed(2)}
+                {isProcessing
+                  ? "Processing..."
+                  : `Pay with Razorpay — ₹${cartTotal.toFixed(2)}`}
               </Button>
               <p className="text-center text-xs text-hack-black/40">
                 Secured by Razorpay · SSL Encrypted
@@ -144,9 +199,7 @@ export default function CheckoutPage() {
             {/* Order Summary */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl border border-hack-black/5 p-6 sticky top-28">
-                <h2 className="font-display font-bold text-lg mb-4">
-                  Order Summary
-                </h2>
+                <h2 className="font-display font-bold text-lg mb-4">Order Summary</h2>
                 <div className="space-y-3 mb-4">
                   {state.cart.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
@@ -158,15 +211,13 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {item.product.name}
-                        </p>
+                        <p className="text-sm font-medium truncate">{item.product.name}</p>
                         <p className="text-xs text-hack-black/50 font-mono">
                           Qty: {item.quantity}
                         </p>
                       </div>
                       <span className="text-sm font-medium">
-                        {item.product.price ?? 'Free'}
+                        {item.product.price ?? "Free"}
                       </span>
                     </div>
                   ))}

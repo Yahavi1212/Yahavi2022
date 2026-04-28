@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -14,4 +14,17 @@ export function parsePriceValue(price?: string): number {
   if (!price) return 0;
   const numeric = price.replace(/[^0-9.]/g, "");
   return Number.parseFloat(numeric) || 0;
+}
+
+/**
+ * Rewrite WordPress media URLs to go through the hackknow.com reverse proxy.
+ * Hides the shop.hackknow.com origin from end users.
+ */
+export function rewriteWpUrl(url?: string | null): string {
+  if (!url) return "";
+  try {
+    return url.replace(/^https?:\/\/shop\.hackknow\.com/i, "");
+  } catch {
+    return url;
+  }
 }

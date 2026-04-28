@@ -4,6 +4,7 @@ import CategorySidebar from './components/CategorySidebar';
 import AuthGuard from './components/AuthGuard';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import MobileBottomBar from './components/MobileBottomBar';
 import YahaviAI from './components/YahaviAI';
 import { StoreProvider } from './context/StoreContext';
 import AboutPage from './pages/AboutPage';
@@ -75,6 +76,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        <MobileBottomBar />
       </Router>
     </StoreProvider>
   );
