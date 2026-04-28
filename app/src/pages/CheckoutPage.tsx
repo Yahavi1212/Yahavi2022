@@ -3,9 +3,12 @@ import { Link } from "react-router-dom";
 import { Check, ChevronLeft, Lock } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { Button } from "@/components/ui/button";
+import { createServerOrder, verifyServerPayment } from "@/lib/checkout-api";
+import { initializeRazorpayPayment } from "@/lib/razorpay";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
-  const { state, cartTotal, dispatch, checkout } = useStore();
+  const { state, cartTotal, dispatch } = useStore();
   const [isComplete, setIsComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
@@ -56,20 +59,60 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isProcessing) return;
     setIsProcessing(true);
 
-    checkout(cartTotal, {
-      onSuccess: () => {
-        dispatch({ type: 'CLEAR_CART' });
-        setIsComplete(true);
-        setIsProcessing(false);
-      },
-      onFailure: () => setIsProcessing(false),
-      onDismiss: () => setIsProcessing(false),
-    });
+    try {
+      const order = await createServerOrder({
+        items: state.cart.map((i) => ({
+          product_id: Number(i.product.id),
+          quantity: i.quantity,
+        })),
+        email: formData.email,
+        phone: formData.phone,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+      });
+
+      initializeRazorpayPayment({
+        key: order.key_id,
+        order_id: order.razorpay_order,
+        amount: order.amount,
+        currency: order.currency,
+        name: "HackKnow",
+        description: `Order #${order.wc_order_id}`,
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          contact: formData.phone,
+        },
+        callbacks: {
+          onSuccess: async (resp) => {
+            try {
+              await verifyServerPayment({
+                razorpay_order_id: resp.razorpay_order_id ?? order.razorpay_order,
+                razorpay_payment_id: resp.razorpay_payment_id,
+                razorpay_signature: resp.razorpay_signature ?? "",
+                wc_order_id: order.wc_order_id,
+              });
+              dispatch({ type: "CLEAR_CART" });
+              setIsComplete(true);
+            } catch {
+              toast.error("Payment received but verification failed. Support has been notified.");
+            } finally {
+              setIsProcessing(false);
+            }
+          },
+          onFailure: () => setIsProcessing(false),
+          onDismiss: () => setIsProcessing(false),
+        },
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start checkout");
+      setIsProcessing(false);
+    }
   };
 
   return (
