@@ -123,3 +123,7 @@ html.lenis, html.lenis body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media (max-width: 1023px) {
+  body { padding-bottom: 64px; }
+}

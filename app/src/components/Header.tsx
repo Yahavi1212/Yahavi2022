@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, X, Heart, User } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { categories } from "@/data/products";
+import { isAuthenticated, logout } from "@/lib/auth";
 
 export default function Header() {
   const { state, dispatch, cartCount } = useStore();
@@ -235,6 +236,35 @@ export default function Header() {
               <Link to="/support" onClick={closeMobileMenu} className="block text-lg">
                 Support
               </Link>
+            </div>
+            <div className="border-t border-hack-black/10 pt-6 space-y-3">
+              <p className="text-xs font-mono uppercase tracking-widest text-hack-black/50 mb-2">
+                Your account
+              </p>
+              {isAuthenticated() ? (
+                <>
+                  <Link to="/account" onClick={closeMobileMenu} className="block text-lg">
+                    My Account
+                  </Link>
+                  <Link to="/account/downloads" onClick={closeMobileMenu} className="block text-lg">
+                    Downloads
+                  </Link>
+                  <Link to="/account/wishlist" onClick={closeMobileMenu} className="block text-lg">
+                    Wishlist
+                  </Link>
+                  <button
+                    onClick={() => { logout(); closeMobileMenu(); navigate('/'); }}
+                    className="block text-lg text-left text-hack-magenta"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={closeMobileMenu} className="block text-lg">Sign in</Link>
+                  <Link to="/signup" onClick={closeMobileMenu} className="block text-lg">Create account</Link>
+                </>
+              )}
             </div>
           </div>
         </div>
