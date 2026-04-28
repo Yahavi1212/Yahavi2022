@@ -6,6 +6,7 @@ import { initializeRazorpayPayment } from "@/lib/razorpay";
 import { parsePriceValue, rewriteWpUrl } from "@/lib/utils";
 import type { RazorpayResponse } from "@/types/razorpay";
 import { toast } from "sonner";
+import { getCurrentUser } from "@/lib/auth";
 
 interface ProductCategoryNode {
   slug?: string | null;
@@ -148,10 +149,15 @@ function storeReducer(state: StoreState, action: StoreAction): StoreState {
   }
 }
 
+function cartKey(): string {
+  const user = getCurrentUser();
+  return user?.id ? `hackknow-cart-${user.id}` : 'hackknow-cart';
+}
+
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const loadCartFromStorage = (): CartItem[] => {
     try {
-      const saved = localStorage.getItem("hackknow-cart");
+      const saved = localStorage.getItem(cartKey());
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -165,7 +171,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     try {
-      localStorage.setItem("hackknow-cart", JSON.stringify(state.cart));
+      localStorage.setItem(cartKey(), JSON.stringify(state.cart));
     } catch (error) {
       console.error("Failed to save cart:", error);
     }
