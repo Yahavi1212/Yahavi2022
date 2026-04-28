@@ -178,9 +178,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [state.cart]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadProducts = async () => {
       try {
         const data = await fetchGraphQL(GET_PRODUCTS_QUERY);
+        if (cancelled) return;
         if (data?.products?.nodes?.length > 0) {
           const mappedProducts: Product[] = data.products.nodes.map((node: ProductNode) => {
             const categories = extractCategorySlugs(node.productCategories?.nodes);
@@ -204,18 +207,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
 
           dispatch({ type: "SET_PRODUCTS", payload: mappedProducts });
-          console.log("Products loaded from WordPress:", mappedProducts.length);
         } else {
           throw new Error("No products returned from API");
         }
       } catch (error) {
+        if (cancelled) return;
+        const isTimeout = error instanceof Error && error.message === 'Request timed out';
         console.warn("WPGraphQL failed, using fallback products:", error);
         dispatch({ type: "SET_PRODUCTS", payload: fallbackProducts });
-        toast.error("Could not reach the store — showing cached products.");
+        toast.error(
+          isTimeout
+            ? "Store is taking too long to respond — showing cached products."
+            : "Could not reach the store — showing cached products."
+        );
       }
     };
 
     loadProducts();
+    return () => { cancelled = true; };
   }, []);
 
   const cartCount = useMemo(

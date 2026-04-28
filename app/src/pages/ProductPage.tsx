@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import DOMPurify from 'dompurify';
 import { Heart, ShoppingCart, Star, Download, Check, Shield, ArrowRight } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { getProductBySlug, getRelatedProducts } from "@/data/products";
@@ -148,9 +149,12 @@ export default function ProductPage() {
               </div>
 
               {product.description && (
-                <p className="text-hack-black/70 leading-relaxed mb-8">
-                  {product.description}
-                </p>
+                <div
+                  className="text-hack-black/70 leading-relaxed mb-8 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(product.description),
+                  }}
+                />
               )}
 
               {/* Tags */}
@@ -234,11 +238,16 @@ export default function ProductPage() {
                 <h3 className="font-display font-bold text-lg mb-4">
                   About This Product
                 </h3>
-                <p className="text-hack-black/70 leading-relaxed">
-                  {product.description || product.shortDescription || 'Premium digital asset designed to save you time and elevate your projects.'} All files are
-                  professionally crafted, fully editable, and ready to use
-                  immediately after download.
-                </p>
+                <div
+                  className="text-hack-black/70 leading-relaxed prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      (product.description || product.shortDescription ||
+                        'Premium digital asset designed to save you time and elevate your projects.') +
+                        ' All files are professionally crafted, fully editable, and ready to use immediately after download.'
+                    ),
+                  }}
+                />
                 <h4 className="font-display font-bold text-lg mt-6 mb-3">
                   What&apos;s Included
                 </h4>

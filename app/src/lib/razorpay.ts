@@ -48,7 +48,7 @@ export const initializeRazorpayPayment = async (
   try {
     const rzp = new window.Razorpay({
       key: razorpayKey,
-      name: 'Hackknow',
+      name: 'HackKnow',
       description: 'Digital Products Marketplace',
       ...rzpOptions,
       theme: { color: '#FFD700' },
