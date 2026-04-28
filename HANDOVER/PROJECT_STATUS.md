@@ -225,7 +225,10 @@ VITE_RAZORPAY_KEY_ID=rzp_live_YOUR_RAZORPAY_KEY
 
 ### 🐛 Known Issues
 
-1. **None currently** - All pages building successfully
+1. **Google OAuth** — placeholder only; backend plugin not configured yet.
+2. **WPGraphQL JWT** — requires `wp-graphql-jwt-authentication` plugin on WordPress.
+3. **Razorpay WooCommerce settings** — `key_id` + `key_secret` must be saved in WC → Settings → Payments → Razorpay.
+4. **Build chunk size** — Vite warning about large JS chunks (no runtime impact).
 
 ---
 

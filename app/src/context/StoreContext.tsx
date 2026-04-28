@@ -5,6 +5,7 @@ import { fetchGraphQL, GET_PRODUCTS_QUERY } from "@/lib/graphql-client";
 import { initializeRazorpayPayment } from "@/lib/razorpay";
 import { parsePriceValue, rewriteWpUrl } from "@/lib/utils";
 import type { RazorpayResponse } from "@/types/razorpay";
+import { toast } from "sonner";
 
 interface ProductCategoryNode {
   slug?: string | null;
@@ -204,7 +205,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } catch (error) {
         console.warn("WPGraphQL failed, using fallback products:", error);
         dispatch({ type: "SET_PRODUCTS", payload: fallbackProducts });
-        console.log("Fallback products loaded:", fallbackProducts.length);
+        toast.error("Could not reach the store — showing cached products.");
       }
     };
 

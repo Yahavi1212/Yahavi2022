@@ -1,37 +1,35 @@
-# Copilot QA Audit Report
+# HackKnow QA Audit — Patch Pack P0-P9
 
-**Date of Audit:** 2026-04-27 05:56:43 UTC  
-**Performed By:** Copilot  
+**Updated:** Post patch-pack application  
 
-## Summary  
-This document details the findings from the audit performed by Copilot on the Yahavi2022 repository. The focus of the audit was on identifying broken links, duplicate code, and configuration issues.
+## Patches Applied
 
-## 1. Broken Links  
-- **Total Broken Links Found:** 5
-- **Details:**  
-  - `link-to-broken1` - Description of why it's broken  
-  - `link-to-broken2` - Description of why it's broken  
-  - `link-to-broken3` - Description of why it's broken  
-  - `link-to-broken4` - Description of why it's broken  
-  - `link-to-broken5` - Description of why it's broken  
+| # | Scope | Status |
+|---|-------|--------|
+| P0 | fix(checkout): only confirm after Razorpay success | ✅ |
+| P1 | feat(payment): server-side Razorpay order + verify | ✅ |
+| P2 | feat(auth): real WordPress JWT login/register | ✅ |
+| P3 | fix(routing): hide shop.hackknow.com from URLs | ✅ |
+| P4 | feat(mobile): sticky bottom nav + account in menu | ✅ |
+| P5 | chore(nginx): TLS, CSP, proxy /wp-content | ✅ |
+| P6 | fix(deploy): harden webhook + auto-deploy | ✅ |
+| P7 | chore: cleanup deps, vite base path | ✅ |
+| P8 | chore(ui+docs): surface API failures, fix QA doc | ✅ |
+| P9 | feat(cart): scope cart by user id | ✅ |
 
-## 2. Duplicate Code  
-- **Total Instances of Duplicate Code Found:** 3
-- **Details:**  
-  - Function `duplicateFunction1` in files `file1.js` and `file2.js`  
-  - Function `duplicateFunction2` in files `file3.js`  
-  - Function `duplicateFunction3` in files `file4.js` and `file5.js`
+## Known Issues
 
-## 3. Configuration Issues  
-- **Total Configuration Issues Found:** 2
-- **Details:**  
-  - Issue 1: Description of configuration issue  
-  - Issue 2: Description of configuration issue  
+- **Google OAuth** — placeholder alert; needs Nextend Social Login plugin on WordPress.
+- **WPGraphQL JWT** — requires `wp-graphql-jwt-authentication` plugin active on WordPress.
+- **Razorpay WooCommerce** — `woocommerce_razorpay_settings` option must contain `key_id` + `key_secret`.
+- **Build chunk size** — Vite warns about large JS chunks; no runtime impact.
 
-## Recommendations  
-- Review and fix the broken links provided above.  
-- Refactor the duplicate code to adhere to DRY principles.  
-- Address the configuration issues as highlighted.
+## Rebrand Checklist
 
----  
+- [x] All "Gumroad" references removed
+- [x] "G Coins" replaced with ⚡ branding
+- [x] `shop.hackknow.com` hidden from browser URLs
+- [x] No WordPress redirect on `/account`
+
+---
 **End of Report**  
