@@ -8,7 +8,7 @@ const perks = [
   'Fast order tracking',
   'Download center access',
   'Wishlist and saved items',
-  'Yahavi AI recommendations',
+  'HackKnow AI recommendations',
 ];
 
 const signupSteps = [
@@ -81,7 +81,7 @@ const SignupPage: FC = () => {
 
             <p className="mt-6 max-w-xl border-l-4 border-hack-yellow pl-4 text-base text-white/80 sm:text-lg">
               This account gives users one clean place for orders, downloads, support, wishlist,
-              and Yahavi AI help. Signup should feel direct, loud, and useful.
+              and HackKnow AI help. Signup should feel direct, loud, and useful.
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">

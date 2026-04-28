@@ -48,8 +48,11 @@ export const registerWithWordPress = async (
 };
 
 export const logout = () => {
+  const user = getCurrentUser();
+  const scopedKey = user?.id ? `hackknow-cart-${user.id}` : 'hackknow-cart';
   clearAuthToken();
   localStorage.removeItem(AUTH_USER_KEY);
+  localStorage.removeItem(scopedKey);
   localStorage.removeItem('hackknow-cart');
 };
 
