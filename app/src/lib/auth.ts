@@ -1,23 +1,63 @@
-import { fetchGraphQL } from './graphql-client';
-import { getAuthToken, setAuthToken, clearAuthToken } from './auth-token';
+/**
+ * Auth helpers — talk to our own /wp-json/hackknow/v1/auth/* REST endpoints
+ * (registered by wp-content/mu-plugins/hackknow-checkout.php), so we do NOT
+ * depend on the WPGraphQL JWT plugin being installed on WordPress.
+ */
+import { getAuthToken, setAuthToken, clearAuthToken } from "./auth-token";
+import { WP_REST_BASE } from "./api-base";
 
-export interface AuthUser { id: string; name: string; email: string; }
-const AUTH_USER_KEY = 'hackknow-user';
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  joinedDate?: string;
+  isVerified?: boolean;
+}
 
-const LOGIN_MUTATION = `
-  mutation Login($username: String!, $password: String!) {
-    login(input: { username: $username, password: $password }) {
-      authToken
-      user { id name email }
+const AUTH_USER_KEY = "hackknow-user";
+const AUTH_TIMEOUT_MS = 15_000;
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
+  try {
+    const r = await fetch(`${WP_REST_BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const data = await r.json().catch(() => ({} as Record<string, unknown>));
+    if (!r.ok) {
+      const msg =
+        (data && typeof data === "object" && "message" in data && typeof (data as { message?: unknown }).message === "string"
+          ? ((data as { message: string }).message)
+          : null) || `Request failed (${r.status})`;
+      throw new Error(msg);
     }
-  }`;
-
-const REGISTER_MUTATION = `
-  mutation Register($username: String!, $email: String!, $password: String!) {
-    registerUser(input: { username: $username, email: $email, password: $password }) {
-      user { id name email }
+    return data as T;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("The server took too long to respond. Please try again.");
     }
-  }`;
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+function persist(res: AuthResponse): AuthUser {
+  setAuthToken(res.token);
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+  return res.user;
+}
 
 export const isAuthenticated = (): boolean =>
   Boolean(getAuthToken() && localStorage.getItem(AUTH_USER_KEY));
@@ -26,34 +66,38 @@ export const getCurrentUser = (): AuthUser | null => {
   try {
     const raw = localStorage.getItem(AUTH_USER_KEY);
     return raw ? (JSON.parse(raw) as AuthUser) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 };
 
-export const loginWithWordPress = async (email: string, password: string): Promise<AuthUser> => {
-  const data = await fetchGraphQL(LOGIN_MUTATION, { username: email, password });
-  const token = data?.login?.authToken;
-  const user  = data?.login?.user;
-  if (!token || !user) throw new Error('Invalid credentials');
-  setAuthToken(token);
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  return user;
-};
+export async function loginWithWordPress(email: string, password: string): Promise<AuthUser> {
+  const res = await postJson<AuthResponse>("/auth/login", { email, password });
+  return persist(res);
+}
 
-export const registerWithWordPress = async (
-  fullName: string, email: string, password: string
-): Promise<AuthUser> => {
-  const username = fullName.trim().replace(/\s+/g, '_').toLowerCase() || email.split('@')[0];
-  await fetchGraphQL(REGISTER_MUTATION, { username, email, password });
-  return loginWithWordPress(email, password);
-};
+export async function registerWithWordPress(
+  fullName: string,
+  email: string,
+  password: string,
+  phone?: string
+): Promise<AuthUser> {
+  const res = await postJson<AuthResponse>("/auth/register", {
+    full_name: fullName,
+    email,
+    password,
+    phone,
+  });
+  return persist(res);
+}
 
-export const logout = () => {
+export const logout = (): void => {
   const user = getCurrentUser();
-  const scopedKey = user?.id ? `hackknow-cart-${user.id}` : 'hackknow-cart';
+  const scopedKey = user?.id ? `hackknow-cart-${user.id}` : "hackknow-cart";
   clearAuthToken();
   localStorage.removeItem(AUTH_USER_KEY);
   localStorage.removeItem(scopedKey);
-  localStorage.removeItem('hackknow-cart');
+  localStorage.removeItem("hackknow-cart");
 };
 
 export { getAuthToken };

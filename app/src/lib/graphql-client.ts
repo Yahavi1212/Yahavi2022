@@ -1,50 +1,63 @@
-import { getAuthToken } from './auth-token';
+import { getAuthToken } from "./auth-token";
+import { WP_GRAPHQL_URL } from "./api-base";
 
-// IMPORTANT: must be a relative path or a hackknow.com URL — never shop.hackknow.com
-const GRAPHQL_ENDPOINT = import.meta.env.VITE_WORDPRESS_URL || '/graphql';
-
+/**
+ * GraphQL client used for the read-only catalog (products, categories, etc.).
+ * Auth is no longer done over GraphQL — see lib/auth.ts (REST).
+ */
 export async function fetchGraphQL(
   query: string,
-  variables: Record<string, unknown> = {},
-  timeoutMs = 10_000
+  variables: Record<string, unknown> = {}
 ) {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   };
   const token = getAuthToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ query, variables }),
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const json = await response.json();
-    if (json.errors) throw new Error(json.errors[0]?.message || 'GraphQL error');
-    return json.data;
-  } catch (err) {
-    clearTimeout(timer);
-    if ((err as Error).name === 'AbortError') throw new Error('Request timed out');
-    throw err;
+  const r = await fetch(WP_GRAPHQL_URL, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+  const json = await r.json();
+  if (json.errors) {
+    console.error("GraphQL errors:", json.errors);
+    throw new Error(json.errors[0]?.message || "Failed to fetch API");
   }
+  return json.data;
 }
 
 export const GET_PRODUCTS_QUERY = `
   query GetProducts {
     products(first: 50) {
       nodes {
-        id databaseId name slug description shortDescription status
-        ... on SimpleProduct { price regularPrice }
-        productCategories { nodes { id databaseId name slug } }
-        image { sourceUrl altText }
+        id
+        databaseId
+        name
+        slug
+        description
+        shortDescription
+        status
+        ... on SimpleProduct {
+          price
+          regularPrice
+        }
+        productCategories {
+          nodes {
+            id
+            databaseId
+            name
+            slug
+          }
+        }
+        image {
+          sourceUrl
+          altText
+        }
       }
     }
-  }`;
+  }
+`;
